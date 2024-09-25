@@ -1,65 +1,103 @@
+import torch
+from torch import nn
+from torch.autograd import Variable
+import docx
+import json
 import re
+from train import DisambiguationLSTM, make_sequence
+import argparse
 
-# 打开文件
-file_path = '199801.txt'  # 请确保文件路径正确
-with open(file_path, 'r', encoding='utf-8') as file:
-    # 读取文件内容
-    content = file.read()
 
-def clean_text(text):
-    # Remove date-like strings at the start of the line
-    text = re.sub(r'^\d{8}-\d{2}-\d{3}-\d{3}/m ', '', text, flags=re.MULTILINE)
 
-    # Remove all Arabic numbers
-    text = re.sub(r'\d+', '', text)
+# 
+if __name__ == '__main__':
 
-    # Remove all book title marks and quotes
-    text = re.sub(r'《|》|"|“|”', '', text)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--scale', type=str, default='v2', help='v1 是小数据集，v2 是大数据集')
+    parser.add_argument('--input', type=str, default='data/nlp_test.docx', help='输入文件名')
+    parser.add_argument('--output', type=str, default='data/nlp_test_output.docx', help='输出文件名')
+    # parser.add_argument('--model', type=str, default='method2/disambiguation_models.pth', help='模型保存路径')
+    args = parser.parse_args()
 
-    # Split the text by lines
-    lines = text.split('\n')
-    cleaned_lines = []
+    if args.scale == 'v1':
+        train_data_file = 'data/train_data.json'
+        model_file = 'data/disambiguation_models.pth'
+    elif args.scale == 'v2':
+        train_data_file = 'data/train_data_big.json'
+        model_file = 'data/disambiguation_models_big.pth'
+    else:
+        raise ValueError('scale 参数只能是 v1 或 v2')
 
-    for line in lines:
-        # Split each line by space, then split each element by '/' and take the first part
-        words = [word.split('/')[0] for word in line.split() if '/' in word]
+    # 读取训练数据
+    with open(train_data_file, 'r', encoding='utf-8') as f:
+        train_data = json.load(f)
 
-        # Join the words and fix extra spaces before punctuation
-        cleaned_line = ' '.join(words)
-        cleaned_line = re.sub(r'\s+([，。！？、])', r'\1', cleaned_line)
+    # 将每个字和多音字的注音编码
+    word_to_idx = {}
+    pron_to_idx = {}
+    for word, examples in train_data.items():
+        if word not in word_to_idx:
+            word_to_idx[word] = len(word_to_idx)
+        for example in examples:
+            _, _, pron = example
+            for ch in example[0]:  # 确保句子中的每个字都被编码
+                if ch not in word_to_idx:
+                    word_to_idx[ch] = len(word_to_idx)
+            if pron not in pron_to_idx:
+                pron_to_idx[pron] = len(pron_to_idx)
 
-        cleaned_lines.append(cleaned_line)
+    # 加载模型
+    models = nn.ModuleDict()
+    for word in train_data.keys():
+        models[word] = DisambiguationLSTM(len(word_to_idx) + 1, 100, 128, len(pron_to_idx))
+    models.load_state_dict(torch.load(model_file))
+    models.eval()  
 
-    # Join the cleaned lines back into a single text
-    cleaned_text = '\n'.join(cleaned_lines)
+    # 读取docx文件
+    doc = docx.Document(args.input)  
+    print("读取文档成功")
 
-    # Remove all spaces
-    cleaned_text = cleaned_text.replace(" ", "")
+    # 定义句子分割的正则表达式（包括标点符号）
+    sentence_pattern = re.compile(r'([^，。；：“”]+[，。；：“”]?)')
 
-    return cleaned_text
+    output_doc = docx.Document()
+    # 遍历文档中的段落
+    for para in doc.paragraphs:
+        text = para.text
+        sentences = sentence_pattern.findall(text)  # 使用正则表达式分割句子并保留标点符号
+        
+        # 创建一个新的段落内容
+        new_paragraph = ""
+        
+        for sentence in sentences:
+            new_sentence = sentence  # 初始化为原始句子
+            # visited_word = set()  # 用于记录已经处理过的词语
+            for word in train_data.keys():
+                # if word in sentence and word not in visited_word:
+                if word in sentence:
+                    # visited_word.add(word)
+                    
+                    for match in re.finditer(word, sentence):
 
-def further_refined_clean_text(text):
-    # Remove date-like strings at the start of the line
-    text = re.sub(r'^\d{8}-\d{2}-\d{3}-\d{3}/m ', '', text, flags=re.MULTILINE)
+                        start, end = match.span()
 
-    # Remove all Arabic numbers
-    text = re.sub(r'\d+', '', text)
+                        # 使用模型进行推理
+                        input_seq = make_sequence(sentence, word_to_idx).unsqueeze(0)  # 添加 batch 维度
+                        with torch.no_grad():
+                            output = models[word](input_seq)
+                            pred_index = torch.max(output, 1)[1].item()  # 获取预测的拼音索引
+                            predicted_pron = list(pron_to_idx.keys())[list(pron_to_idx.values()).index(pred_index)]
+                            
+                        # 在字符后添加拼音
+                        new_sentence = new_sentence[:end] + f'({predicted_pron})' + new_sentence[end:]
 
-    # Remove all book title marks, quotes, and additional specified characters
-    text = re.sub(r'《|》|"|“|”|\'|‘|’|\(|\)|\[|\]|%|\.', '', text)
+                        # 动态更新句子
+                        sentence = new_sentence
 
-    # Keep only specified Chinese punctuation
-    text = re.sub(r'[^\u4e00-\u9fa5，。！？、]', '', text)
+            new_paragraph += new_sentence  # 保留句子之间的空格
+        
+        output_doc.add_paragraph(new_paragraph)  # 保持段落结构
 
-    return text
-
-# Clean the text
-cleaned_text = further_refined_clean_text(clean_text(content))
-
-# 然后，将清理后的文本写入到 'wenben.txt' 文件中
-output_file_path = 'wenben.txt'
-
-# 写入文件
-with open(output_file_path, 'w', encoding='utf-8') as file:
-    file.write(cleaned_text)
-
+    # 保存结果到新的docx文件
+    output_doc.save(args.output)
+    print("拼音已添加并保存到 output.docx")
