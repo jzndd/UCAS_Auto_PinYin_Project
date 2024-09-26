@@ -6,20 +6,32 @@ from pypinyin import pinyin, Style
 
 file_path_1 = 'polyphone.json'
 file_path_2 = 'nlp_test.docx'
+file_path_3 = 'rare_char.json'
 output_doc_path = 'output_with_pinyin.docx'
 
+# 设置生僻字级别
+level = 3000
 # 打开文件并加载多音字数据
 with open(file_path_1, 'r', encoding='utf-8') as file:
     polyphone_data = json.load(file)
-
+with open(file_path_3, 'r', encoding='utf-8') as file:
+    rare_char_data = json.load(file)
+    rare_char_data = rare_char_data[level:]
+    
 # 定义读取文档函数
 def read_from_word_file(file_path):
     doc = Document(file_path)
     return [para.text for para in doc.paragraphs]
 
-# 定义一个函数来处理输入文本，并检查其中的多音字，并添加注音
+def get_pinyin(char):
+    for item in rare_char_data:
+        if item['char'] == char:
+            return item['pinyin']
+    return None  
+# 定义一个函数来处理输入文本，并检查其中的多音字与生僻字，并添加注音
 def add_pinyin_to_polyphone_words(paragraphs, polyphone_data):
     polyphonic_chars = {item['char'] for item in polyphone_data}
+    rare_chars = {item['char'] for item in rare_char_data}
     output_paragraphs = []
 
     for paragraph in paragraphs:
@@ -27,8 +39,10 @@ def add_pinyin_to_polyphone_words(paragraphs, polyphone_data):
         output_paragraph = ""
         char_index = 0
         for char in paragraph:
-            if char in polyphonic_chars:
+            if char in polyphonic_chars :
                 output_paragraph += char + '(' + pinyin_paragraph[char_index][0] + ')'
+            elif char in rare_chars:
+                output_paragraph += char + '[' + get_pinyin(char)[0] + ']'
             else:
                 output_paragraph += char
             char_index += 1
