@@ -6,17 +6,20 @@ import json
 import re
 from train import DisambiguationLSTM, make_sequence
 import argparse
-
+from nlp_nan import pinyin_nan
 
 
 # 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--scale', type=str, default='v2', help='v1 是小数据集，v2 是大数据集')
+    parser.add_argument('--scale', type=str, default='v2', help='v1 是小数据集,v2 是大数据集')
     parser.add_argument('--input', type=str, default='data/nlp_test.docx', help='输入文件名')
     parser.add_argument('--output', type=str, default='data/nlp_test_output.docx', help='输出文件名')
-    # parser.add_argument('--model', type=str, default='method2/disambiguation_models.pth', help='模型保存路径')
+    parser.add_argument('--polyphone', type=str, default='data/polyphone.json', help='多音字路径')
+    parser.add_argument('--rare_char', type=str, default= 'data/rare_char.json', help='生僻字路径')
+    parser.add_argument('--level', type=int, default= 3000, help='设置生僻字级别')
+    parser.add_argument('--model', type=str, default='method2/disambiguation_models.pth', help='模型保存路径')
     args = parser.parse_args()
 
     if args.scale == 'v1':
@@ -50,7 +53,7 @@ if __name__ == '__main__':
     models = nn.ModuleDict()
     for word in train_data.keys():
         models[word] = DisambiguationLSTM(len(word_to_idx) + 1, 100, 128, len(pron_to_idx))
-    models.load_state_dict(torch.load(model_file))
+    # models.load_state_dict(torch.load(model_file))
     models.eval()  
 
     # 读取docx文件
@@ -97,7 +100,9 @@ if __name__ == '__main__':
             new_paragraph += new_sentence  # 保留句子之间的空格
         
         output_doc.add_paragraph(new_paragraph)  # 保持段落结构
-
+      
     # 保存结果到新的docx文件
     output_doc.save(args.output)
+    print("开始难字检测") 
+    pinyin_nan(input_file=args.output,output_doc_path=args.output,polyphone =args.polyphone,rare_char =args.rare_char,level = args.level)
     print("拼音已添加并保存到 output.docx")
