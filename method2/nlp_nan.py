@@ -9,6 +9,7 @@ def read_from_word_file(file_path):
     doc = Document(file_path)
     return [para.text for para in doc.paragraphs]
 
+
 def get_pinyin(char,rare_char_data):
     for item in rare_char_data:
         if item['char'] == char:
