@@ -35,10 +35,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.scale == 'v1':
-        train_data_file = 'train_data.json'
+        train_data_file = 'data/train_data.json'
         model_file = 'data/disambiguation_models.pth'
     elif args.scale == 'v2':
-        train_data_file = 'train_data_big.json'
+        train_data_file = 'data/train_data_big.json'
         model_file = 'data/disambiguation_models_big.pth'
     else:
         raise ValueError('scale 参数只能是 v1 或 v2')
@@ -69,7 +69,8 @@ if __name__ == '__main__':
     # 定义损失函数和优化器
     loss_func = nn.CrossEntropyLoss()
     optimizers = {word: optim.Adam(models[word].parameters(), lr=0.01) for word in models.keys()}
-
+    
+    loss_list = []
     # 训练
     for epoch in range(50):
         print('*' * 10)
@@ -86,6 +87,8 @@ if __name__ == '__main__':
                 running_loss += loss.item()
                 optimizers[word].zero_grad()
                 loss.backward()
+                if word == "了":
+                    loss_list.append(loss.item())
                 optimizers[word].step()
             print(f'Loss for {word}: {running_loss / len(examples)}')
 
@@ -94,3 +97,13 @@ if __name__ == '__main__':
     # 保存模型
     torch.save(models.state_dict(), model_file)
     print("模型已保存")
+
+    # 绘制 loss 曲线
+    import matplotlib.pyplot as plt
+    plt.plot(loss_list)
+    plt.xlabel('Iteration')
+    plt.ylabel('Loss')
+    plt.title('Loss Curve')
+    plt.grid()
+    plt.savefig('assets/loss_curve.png')
+    plt.show()

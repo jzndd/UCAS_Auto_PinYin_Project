@@ -4,7 +4,7 @@
 
 ## 思路
 
-### 1. 字库匹配 + piyinyin
+### 1. 字库匹配 + pypinyin
 
 detail......
 
@@ -40,7 +40,7 @@ git pull
 
 + 介绍问题定义，问题背景，问题意义
 
-+ 方法一 ： 简略介绍 pinyin 库
++ 方法一 ： 简略介绍 pypinyin 库
 
 + 方法二 ： LSTM 
 
@@ -107,21 +107,21 @@ git pull
 
 
         每个网络 （DisambiguationLSTM）是一层 Embedding  + LSTM
-
-        为每个模型训练一个 DisambiguationLSTM ， 最终使用 nn.ModuleDict 的方式做模型集成
-
+    
+        为每个字训练一个 DisambiguationLSTM ， 最终使用 nn.ModuleDict 的方式做模型集成
+    
         （报告中在这里可以绘制 loss 曲线 ？）
-
+    
+    
     + 模型推理 (method2/test.py)
-
+    
         1）正则匹配 （，。；：“ ”）切割句子
-
+    
         2）检查多音字 list 在不在句子中
-
+    
         3）在句子中的话，根据此字和切割出来的句子做推理，然后注音
-
+    
         4）更新句子长度
-
+    
     + UI
- 
 
