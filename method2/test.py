@@ -53,7 +53,7 @@ if __name__ == '__main__':
     models = nn.ModuleDict()
     for word in train_data.keys():
         models[word] = DisambiguationLSTM(len(word_to_idx) + 1, 100, 128, len(pron_to_idx))
-    # models.load_state_dict(torch.load(model_file))
+    models.load_state_dict(torch.load(model_file))
     models.eval()  
 
     # 读取docx文件
