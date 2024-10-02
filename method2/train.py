@@ -29,9 +29,10 @@ def make_sequence(x, dic):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--scale', type=str, default='v2', help='v1 是小数据集，v2 是大数据集')
+    parser.add_argument('--scale', type=str, default='v2', help='v1 是小数据集，v2 是大数据集, v3是郝锐提供的数据集')
     parser.add_argument('--input', type=str, default='data/nlp_test.docx', help='输入文件名')
     parser.add_argument('--output', type=str, default='data/nlp_test_output.docx', help='输出文件名')
+    parser.add_argument("--plot_curve", action="store_true", help="是否绘制 loss 曲线")
     args = parser.parse_args()
 
     if args.scale == 'v1':
@@ -40,8 +41,11 @@ if __name__ == '__main__':
     elif args.scale == 'v2':
         train_data_file = 'data/train_data_big.json'
         model_file = 'data/disambiguation_models_big.pth'
+    elif args.scale == 'v3':
+        train_data_file = 'data/train_data_v3.json'
+        model_file = 'data/disambiguation_models_v3.pth'
     else:
-        raise ValueError('scale 参数只能是 v1 或 v2')
+        raise ValueError('scale 参数只能是 v1 或 v2 或 v3')
     # 读取训练数据
     with open(train_data_file, 'r', encoding='utf-8') as f:
         train_data = json.load(f)
@@ -99,11 +103,12 @@ if __name__ == '__main__':
     print("模型已保存")
 
     # 绘制 loss 曲线
-    import matplotlib.pyplot as plt
-    plt.plot(loss_list)
-    plt.xlabel('Iteration')
-    plt.ylabel('Loss')
-    plt.title('Loss Curve')
-    plt.grid()
-    plt.savefig('assets/loss_curve.png')
-    plt.show()
+    if args.plot_curve:
+        import matplotlib.pyplot as plt
+        plt.plot(loss_list)
+        plt.xlabel('Iteration')
+        plt.ylabel('Loss')
+        plt.title('Loss Curve')
+        plt.grid()
+        plt.savefig('assets/loss_curve.png')
+        plt.show()

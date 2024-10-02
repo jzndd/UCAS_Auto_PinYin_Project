@@ -28,6 +28,9 @@ if __name__ == '__main__':
     elif args.scale == 'v2':
         train_data_file = 'data/train_data_big.json'
         model_file = 'data/disambiguation_models_big.pth'
+    elif args.scale == 'v3':
+        train_data_file = 'data/train_data_v3.json'
+        model_file = 'data/disambiguation_models_v3.pth'
     else:
         raise ValueError('scale 参数只能是 v1 或 v2')
 

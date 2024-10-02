@@ -1,3 +1,4 @@
 /test
 *.pth
 assets/
+__pycache__/
