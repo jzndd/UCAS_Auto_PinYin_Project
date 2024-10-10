@@ -4,11 +4,11 @@ import sys
 
 sys.path.append("..")
 # 读取文字文件
-with open('test/train_v3.sent', 'r', encoding='utf-8') as f:
+with open('test/train_v4.sent', 'r', encoding='utf-8') as f:
     text_lines = f.readlines()
 
 # 读取注音文件
-with open('test/train_v3.lb', 'r', encoding='utf-8') as f:
+with open('test/train_v4.lb', 'r', encoding='utf-8') as f:
     pinyin_lines = f.readlines()
 
 # 初始化字典

@@ -8,13 +8,12 @@ from train import DisambiguationLSTM, make_sequence
 import argparse
 from nlp_nan import pinyin_nan
 
-
-# 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--scale', type=str, default='v4', help='v1 是llm构建+人工清洗的数据集，v2 是人民日报文本+pypinyin自动构建的数据集, v3是群聊 csv 提供的数据集, v4 是群聊 sent 和 lb 数据集,v4_l 是更大的数据集和网络结构')
     parser.add_argument('--input', type=str, default='data/nlp_test.docx', help='输入文件名')
+    parser.add_argument('--gt', type=str, default='data/nlp_test_gt.docx', help='ground truhe 文件名')
     parser.add_argument('--output', type=str, default='data/nlp_test_output.docx', help='输出文件名')
     parser.add_argument('--polyphone', type=str, default='data/polyphone.json', help='多音字路径')
     parser.add_argument('--rare_char', type=str, default= 'data/rare_char.json', help='生僻字路径')
@@ -26,8 +25,8 @@ if __name__ == '__main__':
         model_file = 'data/disambiguation_models.pth'
         args.output = 'data/nlp_test_output.docx'
     elif args.scale == 'v2':
-        train_data_file = 'data/train_data_v2.json'
-        model_file = 'data/disambiguation_models_v2.pth'
+        train_data_file = 'data/train_data_big.json'
+        model_file = 'data/disambiguation_models_big.pth'
         args.output = 'data/nlp_test_output_v2.docx'
     elif args.scale == 'v3':
         train_data_file = 'data/train_data_v3.json'
@@ -72,6 +71,37 @@ if __name__ == '__main__':
     # 定义句子分割的正则表达式（包括标点符号）
     sentence_pattern = re.compile(r'([^，。；：“”]+[，。；：“”]?)')
 
+    predicted_pron_list = []
+
+
+    # -----------------------------------------------------   Get GT -----------------------------------------------------
+    gt_doc = docx.Document(args.input)
+    gt_pron_list = []
+    
+    # 遍历文档中的段落
+    for para in doc.paragraphs:
+        text = para.text
+        sentences = sentence_pattern.findall(text)  # 使用正则表达式分割句子并保留标点符号
+        
+        for sentence in sentences:
+            gt_pron_list.append([])
+
+            # 往 gt 最后一个列表中添加sentence （）括号内的内容
+            for match in re.finditer(r'\((.*?)\)', sentence):
+                gt_pron_list[-1].append(match.group(1))
+
+    print("GT 拼音已读取")
+    print(gt_pron_list)
+    exit(1)
+    # 读取docx文件
+    doc = docx.Document(args.input)  
+    print("读取文档成功")
+
+    # 定义句子分割的正则表达式（包括标点符号）
+    sentence_pattern = re.compile(r'([^，。；：“”]+[，。；：“”]?)')
+
+    predicted_pron_list = []
+
     output_doc = docx.Document()
     # 遍历文档中的段落
     for para in doc.paragraphs:
@@ -82,6 +112,7 @@ if __name__ == '__main__':
         new_paragraph = ""
         
         for sentence in sentences:
+            predicted_pron_list = []
             new_sentence = sentence  # 初始化为原始句子
             # visited_word = set()  # 用于记录已经处理过的词语
             for word in train_data.keys():
@@ -110,11 +141,12 @@ if __name__ == '__main__':
                                 pred_index = torch.max(output, 1)[1].item()  # 获取预测的拼音索引
                                 predicted_pron = list(pron_to_idx.keys())[list(pron_to_idx.values()).index(pred_index)]
                                 
-                            # 在字符后添加拼音
-                            new_sentence = new_sentence[:end] + f'({predicted_pron})' + new_sentence[end:]
+                            # # 在字符后添加拼音
+                            # new_sentence = new_sentence[:end] + f'({predicted_pron})' + new_sentence[end:]
 
-                            # 动态更新句子
-                            sentence = new_sentence
+                            # # 动态更新句子
+                            # sentence = new_sentence
+                            predicted_pron_list.append(predicted_pron)
 
                         else:
                             break
