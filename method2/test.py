@@ -138,7 +138,7 @@ if __name__ == '__main__':
                 elif word not in train_data.keys() and word in standard_dict.keys() and word in poly_dict.keys():
                     # 在字符后添加拼音
                     new_sentence = new_sentence[:char_index] + f'({standard_dict[word]})' + new_sentence[char_index:]
-                    char_index += len(standard_dict[word][0]) + 2
+                    char_index += len(standard_dict[word]) + 2
 
                 elif word not in train_data.keys() and word not in standard_dict.keys() and word in poly_dict.keys():
                     # 在字符后添加拼音
