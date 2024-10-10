@@ -40,7 +40,9 @@ method2
 
 |_ train.py 训练模型，获得 pth 文件  
 
-|_ 加载模型，推理，输入 docx 文件，输出 docx 推理后的文件
+|_ test.py 加载模型，推理，输入 docx 文件，输出 docx 推理后的文件
+
+|_ nlp_nan.py 处理难字
 
 ## TODO:
 
