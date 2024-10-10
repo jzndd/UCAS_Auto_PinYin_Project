@@ -24,7 +24,7 @@ model_v2: 百度网盘分享disambiguation_models.pth链接：https://pan.baidu.
 
 model_v3: 谷歌链接: https://drive.google.com/file/d/1HH53QUr3MphqeJI623mzcRqgTaQsJuY7/view?usp=drive_link
 
-model_v4： 谷歌链接：https://drive.google.com/file/d/1otAUPdIkhgwxuviyZ3DtzjLWaSFpnzcw/view?usp=drive_link
+model_v4： 谷歌链接：https://drive.google.com/file/d/1UcPRuwHs1hkpPFUJHwctbMKGspLHHukk/view?usp=drive_link
 
 ## 代码结构
 
