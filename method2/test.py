@@ -45,6 +45,11 @@ if __name__ == '__main__':
     # 规则推理 ： 着，了，的，地 做单个字时发声是确定地
     rule_word = {"着":"zhe", "了":"le", "的":"de", "地":"de"}
 
+    standard_dict = json.load(open('data/standard_pron.json', 'r', encoding='utf-8'))
+
+    poly_pronunciation = json.load(open('data/polyphone_converted_data.json', 'r', encoding='utf-8'))
+    poly_dict = {entry['char']: entry['pinyin'] for entry in poly_pronunciation}
+
     # 读取训练数据
     with open(train_data_file, 'r', encoding='utf-8') as f:
         train_data = json.load(f)
@@ -87,61 +92,58 @@ if __name__ == '__main__':
         new_paragraph = ""
         
         for sentence in sentences:
+            word_dict = {}
             sentence_jieba_cut = list(jieba.lcut(sentence))
             new_sentence = sentence  # 初始化为原始句子
+            char_index = 0  # 用于记录当前处理的字符位置
             # visited_word = set()  # 用于记录已经处理过的词语
-            for word in train_data.keys():
+            # for word in train_data.keys():
+            for i in range(len(sentence)):
                 # if word in sentence and word not in visited_word:
-                if word in sentence:
-                    # visited_word.add(word)
+                char_index += 1
+                word = sentence[i]
+                jieba_cut_cnt = 0
+                if word in train_data.keys():
+                    # 动态统计 word 出现的次数
+                    if word not in word_dict:
+                        word_dict[word] = 0
+                    word_dict[word] += 1
 
-                    cnt = 0
+                    for sub_sentence_jieba_cut in sentence_jieba_cut:
+                        if word in sub_sentence_jieba_cut:
+                            jieba_cut_cnt +=1
+                            if jieba_cut_cnt == word_dict[word]:
+                                break
 
-                    while(1):
-
-                        if cnt < len(list(re.finditer(word, sentence))):
-
-                            match = list(re.finditer(word, sentence))[cnt]
-
-                            jieba_cut_cnt = 0
-                            cnt += 1
-
-                            start, end = match.span()
-
-                            # print(f'正在处理：{sentence[start:end]}, end-stand={end}-{start}')
-
-                            # 使用模型进行推理
-                            for sub_sentence_jieba_cut in sentence_jieba_cut:
-                                if word in sub_sentence_jieba_cut:
-                                    jieba_cut_cnt +=1
-                                if jieba_cut_cnt == cnt:
-                                    break
-                            # print("sub_sentence_jieba_cut",sub_sentence_jieba_cut)
-
-                            # 规则推理 ： 着，了，的，地 做单个字时发声是确定的
-                            if word in rule_word and len(sub_sentence_jieba_cut)==1:
-                                predicted_pron = rule_word[word]
-                            else:
-                                # 模型推理
-                                if args.use_jieba and  len(sub_sentence_jieba_cut)!=1 :
-                                    input_sentence = sub_sentence_jieba_cut
-                                else:
-                                    input_sentence = sentence 
-
-                                input_seq = make_sequence(input_sentence, word_to_idx).unsqueeze(0)  # 添加 batch 维度
-                                with torch.no_grad():
-                                    output = models[word](input_seq)
-                                    pred_index = torch.max(output, 1)[1].item()  # 获取预测的拼音索引
-                                    predicted_pron = list(pron_to_idx.keys())[list(pron_to_idx.values()).index(pred_index)]
-                                
-                            # 在字符后添加拼音
-                            new_sentence = new_sentence[:end] + f'({predicted_pron})' + new_sentence[end:]
-
-                            # 动态更新句子
-                            sentence = new_sentence
-
+                    # 规则推理 ： 着，了，的，地 做单个字时发声是确定的
+                    if word in rule_word and len(sub_sentence_jieba_cut)==1:
+                        predicted_pron = rule_word[word]
+                    else:
+                        # 模型推理
+                        if args.use_jieba and  len(sub_sentence_jieba_cut)!=1 :
+                            input_sentence = sub_sentence_jieba_cut
                         else:
-                            break
+                            input_sentence = sentence 
+
+                        input_seq = make_sequence(input_sentence, word_to_idx).unsqueeze(0)  # 添加 batch 维度
+                        with torch.no_grad():
+                            output = models[word](input_seq)
+                            pred_index = torch.max(output, 1)[1].item()  # 获取预测的拼音索引
+                            predicted_pron = list(pron_to_idx.keys())[list(pron_to_idx.values()).index(pred_index)]
+                        
+                    # 在字符后添加拼音
+                    new_sentence = new_sentence[:char_index] + f'({predicted_pron})' + new_sentence[char_index:]
+                    char_index += len(predicted_pron) + 2
+
+                elif word not in train_data.keys() and word in standard_dict.keys() and word in poly_dict.keys():\
+                    # 在字符后添加拼音
+                    new_sentence = new_sentence[:char_index] + f'({standard_dict[word]})' + new_sentence[char_index:]
+                    char_index += len(standard_dict[word][0]) + 2
+
+                elif word not in train_data.keys() and word in standard_dict.keys() and word not in poly_dict.keys():
+                    # 在字符后添加拼音
+                    new_sentence = new_sentence[:char_index] + f'({standard_dict[word][0]})' + new_sentence[char_index:]
+                    char_index += len(standard_dict[word][0]) + 2
 
             new_paragraph += new_sentence  # 保留句子之间的空格
         
@@ -149,6 +151,6 @@ if __name__ == '__main__':
       
     # 保存结果到新的docx文件
     output_doc.save(args.output)
-    print("开始难字检测") 
-    pinyin_nan(input_file=args.output,output_doc_path=args.output,polyphone =args.polyphone,rare_char =args.rare_char,level = args.level)
-    print("拼音已添加并保存到 output.docx")
+    # print("开始难字检测") 
+    # pinyin_nan(input_file=args.output,output_doc_path=args.output,polyphone =args.polyphone,rare_char =args.rare_char,level = args.level)
+    # print("拼音已添加并保存到 output.docx")

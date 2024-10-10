@@ -172,8 +172,6 @@ if __name__ == '__main__':
                             input_sentence = sub_sentence_jieba_cut
                         else:
                             input_sentence = sentence  
-                        print(word)
-                        print(input_sentence) 
 
                         # 使用模型进行推理
                         input_seq = make_sequence(input_sentence, word_to_idx).unsqueeze(0)  # 添加 batch 维度
