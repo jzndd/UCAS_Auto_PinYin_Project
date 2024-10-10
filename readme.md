@@ -24,28 +24,39 @@ model_v2: 百度网盘分享disambiguation_models.pth链接：https://pan.baidu.
 
 model_v3: 谷歌链接: https://drive.google.com/file/d/1HH53QUr3MphqeJI623mzcRqgTaQsJuY7/view?usp=drive_link
 
+model_v4： 谷歌链接：https://drive.google.com/file/d/1otAUPdIkhgwxuviyZ3DtzjLWaSFpnzcw/view?usp=drive_link
+
 ## 代码结构
 
-data 存放**模型文件**（.pth, 需要去我的云盘下载）、**训练数据** （.json）、**测试文档与输出文档** （.docx）以及 pypinyin 的支持库 （polyphone.json）
-method1 
+data 存放**模型文件**（.pth, 需要去我的云盘下载）、**训练数据** （.json）、**测试文档与输出文档** （.docx）以及 pypinyin 的支持库 （polyphone.json）  
+
+method1   
+
 |_ method1.py 运行，直接读取docx 文档并注音
 
-method2
-|_ get_data_v_.py 获取各种类型数据集的文件，活比较脏，没必要看，处理思路会写在文档里
-|_ train.py 训练模型，获得 pth 文件
+method2  
+
+|_ get_data_v_.py 获取各种类型数据集的文件，活比较脏，没必要看，处理思路会写在文档里  
+
+|_ train.py 训练模型，获得 pth 文件  
+
 |_ 加载模型，推理，输入 docx 文件，输出 docx 推理后的文件
 
 ## TODO:
 
-LLM 方式作为 method3 合并到代码中
--[] LLM Teacher-Student  @转运使
--[] LLM 语义理解          @郝锐
+LLM 方式作为 method3 合并到代码中  
 
-method2:
--[] 模型文件 v4 的上传 @jzn
--[] 模型推理时，一个句子中有重复的多音字会出现 bug @jzn   （未完成，想摆烂）
+- [ ] LLM Teacher-Student  @qjk
 
-UI 合并到仓库中
+- [ ] LLM 语义理解          @hr
+
+method2:  
+
+- [ ] 模型文件 v4 的上传 @jzn  
+
+- [ ] 模型推理时，一个句子中有重复的多音字会出现 bug @jzn   （未完成，想摆烂）  
+
+- [ ] UI 合并到仓库中 @znx @sl
 
 ## 从文档/介绍方法的角度，可以是这个思路
 
