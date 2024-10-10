@@ -8,6 +8,8 @@ import re
 from train import DisambiguationLSTM, make_sequence
 import argparse
 
+import jieba 
+
 import sys
 
 sys.path.append('..')
@@ -71,9 +73,13 @@ if __name__ == '__main__':
     parser.add_argument('--polyphone', type=str, default='data/polyphone.json', help='多音字路径')
     parser.add_argument('--rare_char', type=str, default= 'data/rare_char.json', help='生僻字路径')
     parser.add_argument('--level', type=int, default= 3000, help='设置生僻字级别')
+    parser.add_argument("--use_jieba", action="store_true", help="是否使用 jieba ")
     args = parser.parse_args()
 
     # ------------------------------------- load model -------------------------------------
+    print("use jieba is :",args.use_jieba)
+    # 规则推理 ： 着，了，的，地 做单个字时发声是确定的
+    rule_word = {"着":"zhe", "了":"le", "的":"de", "地":"de"}
 
     if args.scale == 'v1':
         train_data_file = 'data/train_data.json'
@@ -138,15 +144,43 @@ if __name__ == '__main__':
         
         for sentence in sentences:
             # visited_word = set()  # 用于记录已经处理过的词语
+            sentence_jieba_cut = jieba.lcut(sentence)
+            word_dict = {}
             for word in sentence:
+
+                jieba_cut_cnt = 0
+
                 if word in train_data.keys():
 
-                    # 使用模型进行推理
-                    input_seq = make_sequence(sentence, word_to_idx).unsqueeze(0)  # 添加 batch 维度
-                    with torch.no_grad():
-                        output = models[word](input_seq)
-                        pred_index = torch.max(output, 1)[1].item()  # 获取预测的拼音索引
-                        predicted_pron = list(pron_to_idx.keys())[list(pron_to_idx.values()).index(pred_index)]
+                    # 动态统计 word 出现的次数
+                    if word not in word_dict:
+                        word_dict[word] = 0
+                    word_dict[word] += 1
+
+                    for sub_sentence_jieba_cut in sentence_jieba_cut:
+                        if word in sub_sentence_jieba_cut:
+                            jieba_cut_cnt +=1
+                            if jieba_cut_cnt == word_dict[word]:
+                                break
+
+                    # 规则推理 ： 着，了，的，地 做单个字时发声是确定的
+                    if word in rule_word and len(sub_sentence_jieba_cut)==1:
+                        predicted_pron = rule_word[word]
+                    else:
+                        # 模型推理
+                        if args.use_jieba and  len(sub_sentence_jieba_cut)!=1 :
+                            input_sentence = sub_sentence_jieba_cut
+                        else:
+                            input_sentence = sentence  
+                        print(word)
+                        print(input_sentence) 
+
+                        # 使用模型进行推理
+                        input_seq = make_sequence(input_sentence, word_to_idx).unsqueeze(0)  # 添加 batch 维度
+                        with torch.no_grad():
+                            output = models[word](input_seq)
+                            pred_index = torch.max(output, 1)[1].item()  # 获取预测的拼音索引
+                            predicted_pron = list(pron_to_idx.keys())[list(pron_to_idx.values()).index(pred_index)]
                         
                     predicted_pron_list.append(predicted_pron)
 
