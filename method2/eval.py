@@ -81,6 +81,11 @@ if __name__ == '__main__':
     # 规则推理 ： 着，了，的，地 做单个字时发声是确定的
     rule_word = {"着":"zhe", "了":"le", "的":"de", "地":"de"}
 
+    standard_dict = json.load(open('data/standard_pron.json', 'r', encoding='utf-8'))
+
+    poly_pronunciation = json.load(open('data/polyphone_converted_data.json', 'r', encoding='utf-8'))
+    poly_dict = {entry['char']: entry['pinyin'] for entry in poly_pronunciation}
+
     if args.scale == 'v1':
         train_data_file = 'data/train_data.json'
         model_file = 'data/disambiguation_models.pth'
@@ -182,14 +187,20 @@ if __name__ == '__main__':
                         
                     predicted_pron_list.append(predicted_pron)
 
+                elif word not in train_data.keys() and word in standard_dict.keys() and word in poly_dict.keys():
+                    predicted_pron_list.append(standard_dict[word])
+
+                elif word not in train_data.keys() and word not in standard_dict.keys() and word in poly_dict.keys():
+                    predicted_pron_list.append(poly_dict[word][0])
+
     gt_pinyin_list = convert_tone_to_number(gt_pron_list)
     predicted_pron_list = convert_tone_to_number(predicted_pron_list)
 
-    print(gt_pron_list)
+    # print(gt_pron_list)
 
-    print("-----------------------------------------------------")
+    # print("-----------------------------------------------------")
 
-    print(predicted_pron_list)
+    # print(predicted_pron_list)
 
     lcs_length = longest_common_subsequence_length(gt_pinyin_list, predicted_pron_list)
 

@@ -135,15 +135,15 @@ if __name__ == '__main__':
                     new_sentence = new_sentence[:char_index] + f'({predicted_pron})' + new_sentence[char_index:]
                     char_index += len(predicted_pron) + 2
 
-                elif word not in train_data.keys() and word in standard_dict.keys() and word in poly_dict.keys():\
+                elif word not in train_data.keys() and word in standard_dict.keys() and word in poly_dict.keys():
                     # 在字符后添加拼音
                     new_sentence = new_sentence[:char_index] + f'({standard_dict[word]})' + new_sentence[char_index:]
                     char_index += len(standard_dict[word][0]) + 2
 
-                elif word not in train_data.keys() and word in standard_dict.keys() and word not in poly_dict.keys():
+                elif word not in train_data.keys() and word not in standard_dict.keys() and word in poly_dict.keys():
                     # 在字符后添加拼音
-                    new_sentence = new_sentence[:char_index] + f'({standard_dict[word][0]})' + new_sentence[char_index:]
-                    char_index += len(standard_dict[word][0]) + 2
+                    new_sentence = new_sentence[:char_index] + f'({poly_dict[word][0]})' + new_sentence[char_index:]
+                    char_index += len(poly_dict[word][0]) + 2
 
             new_paragraph += new_sentence  # 保留句子之间的空格
         
