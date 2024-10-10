@@ -4,6 +4,7 @@ import torch
 from torch import nn, optim
 from torch.autograd import Variable
 import json
+from method2.MUSEAttention import MUSEAttention
 
 
 # 定义用于消岐的LSTM网络
