@@ -4,10 +4,13 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 import json
 from pypinyin import pinyin, Style
 
-file_path_1 = 'polyphone.json'
-file_path_2 = 'nlp_test.docx'
-file_path_3 = 'rare_char.json'
-output_doc_path = 'output_with_pinyin.docx'
+import sys
+sys.path.append("..")
+
+file_path_1 = 'data/polyphone.json'
+file_path_2 = 'data/nlp_test.docx'
+file_path_3 = 'data/rare_char.json'
+output_doc_path = 'data/output_with_pinyin.docx'
 
 # 设置生僻字级别
 level = 3000

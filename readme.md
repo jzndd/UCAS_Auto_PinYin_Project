@@ -16,11 +16,36 @@ git pull
 
 文档地址 ： https://www.overleaf.com/4464365427cnnrmvnwtssc#66a4ab
 
-pth 地址 (数据集来源不一致) ：
+pth 地址 ：
 
-big_model :  百度网盘分享的文件disambiguation_models_big.pth 链接：https://pan.baidu.com/s/1LeAreewqKOikbh5nleoejA?pwd=4qex  提取码：4qex ; 谷歌链接：https://drive.google.com/file/d/1Oeg4F-PKiLJf8De4NKUJUWgzI8Xi8NrO/view?usp=drive_link
+model_v1 :  百度网盘分享的文件disambiguation_models_big.pth 链接：https://pan.baidu.com/s/1LeAreewqKOikbh5nleoejA?pwd=4qex  提取码：4qex ; 谷歌链接：https://drive.google.com/file/d/1Oeg4F-PKiLJf8De4NKUJUWgzI8Xi8NrO/view?usp=drive_link
 
-small_model: 百度网盘分享disambiguation_models.pth链接：https://pan.baidu.com/s/1UenI6JgfvLRxVjw6qtQG8w?pwd=xrqv 提取码：xrqv ；谷歌链接：https://drive.google.com/file/d/1Oeg4F-PKiLJf8De4NKUJUWgzI8Xi8NrO/view?usp=drive_link
+model_v2: 百度网盘分享disambiguation_models.pth链接：https://pan.baidu.com/s/1UenI6JgfvLRxVjw6qtQG8w?pwd=xrqv 提取码：xrqv ；谷歌链接：https://drive.google.com/file/d/1Oeg4F-PKiLJf8De4NKUJUWgzI8Xi8NrO/view?usp=drive_link
+
+model_v3: 谷歌链接: https://drive.google.com/file/d/1HH53QUr3MphqeJI623mzcRqgTaQsJuY7/view?usp=drive_link
+
+## 代码结构
+
+data 存放**模型文件**（.pth, 需要去我的云盘下载）、**训练数据** （.json）、**测试文档与输出文档** （.docx）以及 pypinyin 的支持库 （polyphone.json）
+method1 
+|_ method1.py 运行，直接读取docx 文档并注音
+
+method2
+|_ get_data_v_.py 获取各种类型数据集的文件，活比较脏，没必要看，处理思路会写在文档里
+|_ train.py 训练模型，获得 pth 文件
+|_ 加载模型，推理，输入 docx 文件，输出 docx 推理后的文件
+
+## TODO:
+
+LLM 方式作为 method3 合并到代码中
+-[] LLM Teacher-Student  @转运使
+-[] LLM 语义理解          @郝锐
+
+method2:
+-[] 模型文件 v4 的上传 @jzn
+-[] 模型推理时，一个句子中有重复的多音字会出现 bug @jzn   （未完成，想摆烂）
+
+UI 合并到仓库中
 
 ## 从文档/介绍方法的角度，可以是这个思路
 
@@ -67,11 +92,11 @@ small_model: 百度网盘分享disambiguation_models.pth链接：https://pan.bai
             ("少一点抱怨，多一点行动", "少", "shǎo")
             ],
         ```
-        会出现两个问题 ： 1）贵 ； 2）生成质量不稳定，如下图，需要大量的人工精力去修改
+        会出现两个问题 ：  1）生成质量不稳定，如下图，需要大量的人工精力去修改
         ![](assets/LLM-wrong_example.png)
         ![](assets/LLM_wrong_example2.png)
 
-        考虑使用爬虫 + pypinyin 自动注音的方式获得数据集，最终爬取了 3.7 MB的文本数据，使用 pypinyin 添加了注音后进行**数据集构建**，数据集构建的代码为 ： method2/get_data.py
+        考虑使用爬虫 + pypinyin 自动注音的方式获得数据集，爬取了 3.7 MB的文本数据，使用 pypinyin 添加了注音后进行**数据集构建**，数据集构建的代码为 ： method2/get_data.py
 
         核心点如下：
 
@@ -85,9 +110,17 @@ small_model: 百度网盘分享disambiguation_models.pth链接：https://pan.bai
                 if existing_pronunciations.count(pronunciation) > 5:
                     continue  # 如果发音个数大于5，则跳过添加
         ```
-        为什么这样做 ？
+        为什么这样做 ？-- 可以避免样本失衡带来的问题;
     
-        最终从 3.7 M 的文本中获得了 509 KB 的数据集
+        最终，分别使用了四类数据集来构建数据：
+
+        1）102KB 大模型 + 人工挑选
+
+        2）500KB pinyin + 爬虫高质量的文本
+
+        3）2.55MB （群聊中的 csv 数据集经过处理）
+
+        4）1.59 MB （群聊中的 sent 文件经过处理）
 
     + 模型训练 (method2/train.py)
     

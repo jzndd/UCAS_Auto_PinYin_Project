@@ -29,7 +29,7 @@ def make_sequence(x, dic):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--scale', type=str, default='v2', help='v1 是小数据集，v2 是大数据集, v3是郝锐提供的数据集')
+    parser.add_argument('--scale', type=str, default='v4', help='v1 是llm构建+人工清洗的数据集，v2 是人民日报文本+pypinyin自动构建的数据集, v3是群聊 csv 提供的数据集, v4 是群聊 sent 和 lb 数据集')
     parser.add_argument('--input', type=str, default='data/nlp_test.docx', help='输入文件名')
     parser.add_argument('--output', type=str, default='data/nlp_test_output.docx', help='输出文件名')
     parser.add_argument("--plot_curve", action="store_true", help="是否绘制 loss 曲线")
@@ -39,13 +39,16 @@ if __name__ == '__main__':
         train_data_file = 'data/train_data.json'
         model_file = 'data/disambiguation_models.pth'
     elif args.scale == 'v2':
-        train_data_file = 'data/train_data_big.json'
-        model_file = 'data/disambiguation_models_big.pth'
+        train_data_file = 'data/train_data_v2.json'      # 原来的名字是 train_data_big.json ， 改一改名字
+        model_file = 'data/disambiguation_models_v2.pth' # 原来的名字是 disambiguation_models_big.pth ， 改一改名字
     elif args.scale == 'v3':
         train_data_file = 'data/train_data_v3.json'
         model_file = 'data/disambiguation_models_v3.pth'
+    elif args.scale == 'v4':
+        train_data_file = 'data/train_data_v4.json'
+        model_file = 'data/disambiguation_models_v4.pth'
     else:
-        raise ValueError('scale 参数只能是 v1 或 v2 或 v3')
+        raise ValueError('scale 参数只能是 v1 或 v2 或 v3 或 v4')
     # 读取训练数据
     with open(train_data_file, 'r', encoding='utf-8') as f:
         train_data = json.load(f)
@@ -68,7 +71,9 @@ if __name__ == '__main__':
     # 使用 nn.ModuleDict 打包每个字的LSTM网络
     models = nn.ModuleDict()
     for word in train_data.keys():  # 只为 train_data 中的键构建模型
+        print(f'Building model for {word}')
         models[word] = DisambiguationLSTM(len(word_to_idx) + 1, 100, 128, len(pron_to_idx))
+    models = models.cuda()
 
     # 定义损失函数和优化器
     loss_func = nn.CrossEntropyLoss()
@@ -84,8 +89,11 @@ if __name__ == '__main__':
             for example in examples:
                 sentence, _, pron = example
                 word_list = make_sequence(sentence, word_to_idx)
+                word_list = word_list.cuda()  # 添加 batch 维度
                 pron_list = [pron_to_idx[pron]]
+                # 将 pron tensor 到 cuda 上
                 pron_tensor = Variable(torch.LongTensor(pron_list))
+                pron_tensor = pron_tensor.cuda()
                 out = models[word](word_list.unsqueeze(0))  # 添加 batch 维度
                 loss = loss_func(out, pron_tensor)
                 running_loss += loss.item()
