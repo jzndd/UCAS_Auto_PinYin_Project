@@ -13,13 +13,12 @@ from nlp_nan import pinyin_nan
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--scale', type=str, default='v2', help='v1 是小数据集,v2 是大数据集')
+    parser.add_argument('--scale', type=str, default='v2', help='v1 是llm构建+人工清洗的数据集，v2 是人民日报文本+pypinyin自动构建的数据集, v3是群聊 csv 提供的数据集, v4 是群聊 sent 和 lb 数据集,v4_l 是更大的数据集和网络结构')
     parser.add_argument('--input', type=str, default='data/nlp_test.docx', help='输入文件名')
     parser.add_argument('--output', type=str, default='data/nlp_test_output.docx', help='输出文件名')
     parser.add_argument('--polyphone', type=str, default='data/polyphone.json', help='多音字路径')
     parser.add_argument('--rare_char', type=str, default= 'data/rare_char.json', help='生僻字路径')
     parser.add_argument('--level', type=int, default= 3000, help='设置生僻字级别')
-    parser.add_argument('--model', type=str, default='method2/disambiguation_models.pth', help='模型保存路径')
     args = parser.parse_args()
 
     if args.scale == 'v1':
@@ -85,23 +84,36 @@ if __name__ == '__main__':
                 # if word in sentence and word not in visited_word:
                 if word in sentence:
                     # visited_word.add(word)
-                    
-                    for match in re.finditer(word, sentence):
 
-                        start, end = match.span()
+                    cnt = 0
 
-                        # 使用模型进行推理
-                        input_seq = make_sequence(sentence, word_to_idx).unsqueeze(0)  # 添加 batch 维度
-                        with torch.no_grad():
-                            output = models[word](input_seq)
-                            pred_index = torch.max(output, 1)[1].item()  # 获取预测的拼音索引
-                            predicted_pron = list(pron_to_idx.keys())[list(pron_to_idx.values()).index(pred_index)]
-                            
-                        # 在字符后添加拼音
-                        new_sentence = new_sentence[:end] + f'({predicted_pron})' + new_sentence[end:]
+                    while(1):
 
-                        # 动态更新句子
-                        sentence = new_sentence
+                        if cnt < len(list(re.finditer(word, sentence))):
+
+                            match = list(re.finditer(word, sentence))[cnt]
+
+                            cnt += 1
+
+                            start, end = match.span()
+
+                            # print(f'正在处理：{sentence[start:end]}, end-stand={end}-{start}')
+
+                            # 使用模型进行推理
+                            input_seq = make_sequence(sentence, word_to_idx).unsqueeze(0)  # 添加 batch 维度
+                            with torch.no_grad():
+                                output = models[word](input_seq)
+                                pred_index = torch.max(output, 1)[1].item()  # 获取预测的拼音索引
+                                predicted_pron = list(pron_to_idx.keys())[list(pron_to_idx.values()).index(pred_index)]
+                                
+                            # 在字符后添加拼音
+                            new_sentence = new_sentence[:end] + f'({predicted_pron})' + new_sentence[end:]
+
+                            # 动态更新句子
+                            sentence = new_sentence
+
+                        else:
+                            break
 
             new_paragraph += new_sentence  # 保留句子之间的空格
         

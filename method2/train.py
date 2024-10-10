@@ -29,10 +29,10 @@ def make_sequence(x, dic):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--scale', type=str, default='v4', help='v1 是llm构建+人工清洗的数据集，v2 是人民日报文本+pypinyin自动构建的数据集, v3是群聊 csv 提供的数据集, v4 是群聊 sent 和 lb 数据集')
+    parser.add_argument('--scale', type=str, default='v4_l', help='v1 是llm构建+人工清洗的数据集，v2 是人民日报文本+pypinyin自动构建的数据集, v3是群聊 csv 提供的数据集, v4 是群聊 sent 和 lb 数据集,v4_l 是更大的数据集和网络结构')
     parser.add_argument('--input', type=str, default='data/nlp_test.docx', help='输入文件名')
     parser.add_argument('--output', type=str, default='data/nlp_test_output.docx', help='输出文件名')
-    parser.add_argument("--plot_curve", action="store_true", help="是否绘制 loss 曲线")
+    parser.add_argument("--plot_curve", action="store_false", help="是否绘制 loss 曲线")
     args = parser.parse_args()
 
     if args.scale == 'v1':
@@ -47,8 +47,15 @@ if __name__ == '__main__':
     elif args.scale == 'v4':
         train_data_file = 'data/train_data_v4.json'
         model_file = 'data/disambiguation_models_v4.pth'
+    elif args.scale == 'v4_l':
+        train_data_file = 'data/train_data_v4_large.json'
+        model_file = 'data/disambiguation_models_v4_large.pth'
     else:
         raise ValueError('scale 参数只能是 v1 或 v2 或 v3 或 v4')
+    
+    word_hidden_size = 128 if args.scale != 'v4_l' else 512
+    word_dim = 100 if args.scale != 'v4_l' else 250
+
     # 读取训练数据
     with open(train_data_file, 'r', encoding='utf-8') as f:
         train_data = json.load(f)
@@ -72,7 +79,7 @@ if __name__ == '__main__':
     models = nn.ModuleDict()
     for word in train_data.keys():  # 只为 train_data 中的键构建模型
         print(f'Building model for {word}')
-        models[word] = DisambiguationLSTM(len(word_to_idx) + 1, 100, 128, len(pron_to_idx))
+        models[word] = DisambiguationLSTM(len(word_to_idx) + 1, 100, word_hidden_size, len(pron_to_idx))
     models = models.cuda()
 
     # 定义损失函数和优化器
