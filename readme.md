@@ -52,10 +52,12 @@ LLM 方式作为 method3 合并到代码中
 
 method2:  
 
-- [ ] 模型文件 v4 的上传 @jzn  
+- [x] 模型文件 v4 的上传 @jzn  
 
 - [ ] 模型推理时，一个句子中有重复的多音字会出现 bug @jzn   （未完成，想摆烂）  
 
+UI
+ 
 - [ ] UI 合并到仓库中 @znx @sl
 
 benchmark :
