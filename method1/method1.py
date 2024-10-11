@@ -8,7 +8,7 @@ import sys
 sys.path.append("..")
 
 file_path_1 = 'data/polyphone.json'
-file_path_2 = 'data/nlp_test.docx'
+file_path_2 = 'data/eval2.docx'
 file_path_3 = 'data/rare_char.json'
 output_doc_path = 'data/output_with_pinyin.docx'
 
