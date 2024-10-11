@@ -48,7 +48,7 @@ if __name__ == '__main__':
         model_file = 'data/disambiguation_models_v2.pth' # 原来的名字是 disambiguation_models_big.pth ， 改一改名字
     elif args.scale == 'v3':
         train_data_file = 'data/train_data_v3.json'
-        model_file = 'data/disambiguation_models_v3.pth'
+        model_file = 'data/disambiguation_models_v3_2.pth'
     elif args.scale == 'v4':
         train_data_file = 'data/train_data_v4.json'
         model_file = 'data/disambiguation_models_v4.pth'
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     
     loss_list = []
     # 训练
-    for epoch in range(50):
+    for epoch in range(100):
         print('*' * 10)
         print(f'epoch {epoch + 1}')
         for word, examples in train_data.items():

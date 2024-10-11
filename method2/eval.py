@@ -68,13 +68,23 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--scale', type=str, default='v4', help='v1 是llm构建+人工清洗的数据集，v2 是人民日报文本+pypinyin自动构建的数据集, v3是群聊 csv 提供的数据集, v4 是群聊 sent 和 lb 数据集,v4_l 是更大的数据集和网络结构')
-    parser.add_argument('--input', type=str, default='data/eval.docx', help='输入文件名')
-    parser.add_argument('--gt', type=str, default='data/eval_gt.docx', help='ground truhe 文件名')
+    parser.add_argument('--benchmark', type=str, default='v1', help='v1 是正常文本，v2是极端文本')
+    # parser.add_argument('--input', type=str, default='data/eval.docx', help='输入文件名')
+    # parser.add_argument('--gt', type=str, default='data/eval_gt.docx', help='ground truhe 文件名')
     parser.add_argument('--polyphone', type=str, default='data/polyphone.json', help='多音字路径')
     parser.add_argument('--rare_char', type=str, default= 'data/rare_char.json', help='生僻字路径')
     parser.add_argument('--level', type=int, default= 3000, help='设置生僻字级别')
     parser.add_argument("--use_jieba", action="store_true", help="是否使用 jieba ")
     args = parser.parse_args()
+
+    if args.benchmark == 'v1':
+        args.input = 'data/eval.docx'
+        args.gt = 'data/eval_gt.docx'
+    elif args.benchmark == 'v2':
+        args.input = 'data/eval2.docx'
+        args.gt = 'data/eval2_gt.docx'
+    else:
+        raise ValueError('benchmark 参数只能是 v1 或 v2')
 
     # ------------------------------------- load model -------------------------------------
     print("use jieba is :",args.use_jieba)
