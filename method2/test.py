@@ -33,7 +33,7 @@ if __name__ == '__main__':
         args.output = 'data/nlp_test_output_v2.docx'
     elif args.scale == 'v3':
         train_data_file = 'data/train_data_v3.json'
-        model_file = 'data/disambiguation_models_v3_2.pth'
+        model_file = 'data/disambiguation_models_v3.pth'
         args.output = 'data/nlp_test_output_v3.docx'
     elif args.scale == 'v4':
         train_data_file = 'data/train_data_v4.json'
